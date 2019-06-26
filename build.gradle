@@ -1,0 +1,75 @@
+plugins {
+	id 'idea'
+    id 'java-library'
+    id 'maven-publish'
+    id 'com.jfrog.bintray' version '1.8.4'
+    id 'io.spring.dependency-management' version '1.0.8.RELEASE'
+}
+
+group 'com.github.slamdev'
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+dependencyManagement {
+    imports {
+        // sync dependency with spring boot via:
+        // https://github.com/spring-cloud/spring-cloud-build/blob/v2.0.0.M7/spring-cloud-build-dependencies/pom.xml
+        // https://github.com/spring-cloud/spring-cloud-release/blob/vFinchley.M6/spring-cloud-dependencies/pom.xml
+        mavenBom 'org.springframework.cloud:spring-cloud-dependencies:Greenwich.SR2'
+        // spring-boot-dependencies should be declared last to override everything on top
+        mavenBom 'org.springframework.boot:spring-boot-dependencies:2.1.6.RELEASE'
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
+    api 'org.springframework.cloud:spring-cloud-stream'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+    annotationProcessor 'org.springframework.boot:spring-boot-autoconfigure-processor'
+    implementation 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    implementation 'io.nats:jnats:2.5.2'
+}
+
+repositories {
+    jcenter()
+}
+
+compileJava.dependsOn(processResources)
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+bintray {
+    user = 'slamdev'
+    key = "${-> getBintrayPublishKey()}"
+    override = true
+    publications = ['mavenJava']
+    pkg {
+        repo = 'maven'
+        name = project.name
+        desc = 'Spring Cloud Stream NATS binder'
+        licenses = ['MIT']
+        websiteUrl = 'https://github.com/slamdev/nats-spring-cloud-stream-binder'
+        issueTrackerUrl = 'https://github.com/slamdev/nats-spring-cloud-stream-binder/issues'
+        vcsUrl = 'https://github.com/slamdev/nats-spring-cloud-stream-binder.git'
+        labels = ['spring', 'spring-boot', 'spring-cloud', 'nats']
+    }
+}
+
+def getBintrayPublishKey() {
+    if (project.hasProperty('bintray.publish.key')) {
+        return project.properties['bintray.publish.key']
+    }
+    if (System.getenv().hasProperty('BINTRAY_PUBLISH_KEY')) {
+        return System.getenv('BINTRAY_PUBLISH_KEY')
+    }
+    throw new InvalidUserDataException('Either `bintray.publish.key` project property or ' +
+            '`BINTRAY_PUBLISH_KEY` environment variable should be specified')
+}
