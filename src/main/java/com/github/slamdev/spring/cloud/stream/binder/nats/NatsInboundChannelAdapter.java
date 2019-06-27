@@ -11,6 +11,7 @@ import org.springframework.integration.endpoint.MessageProducerSupport;
 public class NatsInboundChannelAdapter extends MessageProducerSupport {
 
     private final String subject;
+    private final String queue;
     private final Connection connection;
     private Dispatcher dispatcher;
 
@@ -18,7 +19,11 @@ public class NatsInboundChannelAdapter extends MessageProducerSupport {
     protected void doStart() {
         super.doStart();
         dispatcher = connection.createDispatcher(this::consumeMessage);
-        dispatcher.subscribe(subject);
+        if (queue == null) {
+            dispatcher.subscribe(subject);
+        } else {
+            dispatcher.subscribe(subject, queue);
+        }
     }
 
     @Override

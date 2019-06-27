@@ -40,7 +40,7 @@ public class NatsMessageChannelBinder extends AbstractMessageChannelBinder<Exten
     @Override
     protected MessageProducer createConsumerEndpoint(ConsumerDestination destination, String group,
                                                      ExtendedConsumerProperties<NatsConsumerProperties> properties) {
-        return new NatsInboundChannelAdapter(destination.getName(), connection);
+        return new NatsInboundChannelAdapter(destination.getName(), group, connection);
     }
 
     @Override
