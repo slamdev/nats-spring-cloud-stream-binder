@@ -1,5 +1,5 @@
 plugins {
-	id 'idea'
+    id 'idea'
     id 'java-library'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.8.4'
@@ -38,10 +38,57 @@ repositories {
 
 compileJava.dependsOn(processResources)
 
+def pomConfig = {
+    licenses {
+        license {
+            name 'MIT'
+            url 'https://opensource.org/licenses/MIT'
+            distribution 'repo'
+        }
+    }
+    developers {
+        developer {
+            id 'slamdev'
+            name 'Valentin Fedoskin'
+            email 'valentin.fedoskin@gmail.com'
+        }
+    }
+
+    scm {
+        url 'https://github.com/slamdev/nats-spring-cloud-stream-binder'
+    }
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    archiveClassifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    archiveClassifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar, javadocJar
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
             from components.java
+            artifact sourcesJar
+            artifact javadocJar
+            groupId project.group
+            artifactId project.name
+            version project.version
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('description', 'Spring Cloud Stream NATS binder')
+                root.appendNode('name', project.name)
+                root.appendNode('url', 'https://github.com/slamdev/nats-spring-cloud-stream-binder')
+                root.children().last() + pomConfig
+            }
         }
     }
 }
@@ -51,6 +98,7 @@ bintray {
     key = "${-> getBintrayPublishKey()}"
     override = true
     publications = ['mavenJava']
+    publish = true
     pkg {
         repo = 'maven'
         name = project.name
@@ -60,6 +108,8 @@ bintray {
         issueTrackerUrl = 'https://github.com/slamdev/nats-spring-cloud-stream-binder/issues'
         vcsUrl = 'https://github.com/slamdev/nats-spring-cloud-stream-binder.git'
         labels = ['spring', 'spring-boot', 'spring-cloud', 'nats']
+        githubRepo = 'slamdev/nats-spring-cloud-stream-binder'
+        githubReleaseNotesFile = 'README.md'
     }
 }
 
